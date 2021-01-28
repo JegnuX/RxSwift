@@ -41,6 +41,9 @@ public protocol ControlPropertyType : ObservableType, ObserverType {
 */
 public struct ControlProperty<PropertyType> : ControlPropertyType {
     public typealias Element = PropertyType
+    
+    private let file: StaticString
+    private let line: UInt
 
     let values: Observable<PropertyType>
     let valueSink: AnyObserver<PropertyType>
@@ -52,9 +55,11 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     /// - parameter valueSink: Observer that enables binding values to control property.
     /// - returns: Control property created with a observable sequence of values and an observer that enables binding values
     /// to property.
-    public init<Values: ObservableType, Sink: ObserverType>(values: Values, valueSink: Sink) where Element == Values.Element, Element == Sink.Element {
+    public init<Values: ObservableType, Sink: ObserverType>(values: Values, valueSink: Sink, file: StaticString = #file, line: UInt = #line) where Element == Values.Element, Element == Sink.Element {
         self.values = values.subscribe(on: ConcurrentMainScheduler.instance)
         self.valueSink = valueSink.asObserver()
+        self.file = file
+        self.line = line
     }
 
     /// Subscribes an observer to control property values.
@@ -97,7 +102,7 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     public func on(_ event: Event<Element>) {
         switch event {
         case .error(let error):
-            bindingError(error)
+            bindingError(error, file: file, line: line)
         case .next:
             self.valueSink.on(event)
         case .completed:

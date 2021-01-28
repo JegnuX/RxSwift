@@ -317,7 +317,7 @@ extension DelegateProxyType where ParentObject: HasPrefetchDataSource, Self.Dele
         import UIKit
 
         extension ObservableType {
-            func subscribeProxyDataSource<DelegateProxy: DelegateProxyType>(ofObject object: DelegateProxy.ParentObject, dataSource: DelegateProxy.Delegate, retainDataSource: Bool, binding: @escaping (DelegateProxy, Event<Element>) -> Void)
+            func subscribeProxyDataSource<DelegateProxy: DelegateProxyType>(ofObject object: DelegateProxy.ParentObject, dataSource: DelegateProxy.Delegate, retainDataSource: Bool, file: StaticString, line: UInt, binding: @escaping (DelegateProxy, Event<Element>) -> Void)
                 -> Disposable
                 where DelegateProxy.ParentObject: UIView
                 , DelegateProxy.Delegate: AnyObject {
@@ -333,7 +333,7 @@ extension DelegateProxyType where ParentObject: HasPrefetchDataSource, Self.Dele
                 let subscription = self.asObservable()
                     .observe(on:MainScheduler())
                     .catch { error in
-                        bindingError(error)
+                        bindingError(error, file: file, line: line)
                         return Observable.empty()
                     }
                     // source can never end, otherwise it would release the subscriber, and deallocate the data source
@@ -349,7 +349,7 @@ extension DelegateProxyType where ParentObject: HasPrefetchDataSource, Self.Dele
                         
                         switch event {
                         case .error(let error):
-                            bindingError(error)
+                            bindingError(error, file: file, line: line)
                             unregisterDelegate.dispose()
                         case .completed:
                             unregisterDelegate.dispose()

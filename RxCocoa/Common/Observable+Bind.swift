@@ -42,8 +42,8 @@ extension ObservableType {
     - parameter to: Function used to bind elements from `self`.
     - returns: Object representing subscription.
     */
-    public func bind<Result>(to binder: (Self) -> Result) -> Result {
-        binder(self)
+    public func bind<Result>(to binder: (Self, StaticString, UInt) -> Result, file: StaticString = #file, line: UInt = #line) -> Result {
+        binder(self, file, line)
     }
 
     /**
@@ -58,8 +58,8 @@ extension ObservableType {
     - parameter curriedArgument: Final argument passed to `binder` to finish binding process.
     - returns: Object representing subscription.
     */
-    public func bind<R1, R2>(to binder: (Self) -> (R1) -> R2, curriedArgument: R1) -> R2 {
-        binder(self)(curriedArgument)
+    public func bind<R1, R2>(to binder: (Self, StaticString, UInt) -> (R1) -> R2, file: StaticString = #file, line: UInt = #line, curriedArgument: R1) -> R2 {
+        binder(self, file, line)(curriedArgument)
     }
 
     /**
@@ -70,10 +70,12 @@ extension ObservableType {
     - parameter onNext: Action to invoke for each element in the observable sequence.
     - returns: Subscription object used to unsubscribe from the observable sequence.
     */
-    public func bind(onNext: @escaping (Element) -> Void) -> Disposable {
-        self.subscribe(onNext: onNext,
-                       onError: { error in
-                        rxFatalErrorInDebug("Binding error: \(error)")
-                       })
+    public func bind(onNext: @escaping (Element) -> Void, file: StaticString = #file, line: UInt = #line) -> Disposable {
+        self.subscribe(
+            onNext: onNext,
+            onError: { error in
+                bindingError(error, file: file, line: line)
+            }
+        )
     }
 }

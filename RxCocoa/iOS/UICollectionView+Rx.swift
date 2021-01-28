@@ -40,12 +40,12 @@ extension Reactive where Base: UICollectionView {
          .disposed(by: disposeBag)
     */
     public func items<Sequence: Swift.Sequence, Source: ObservableType>
-        (_ source: Source)
+        (_ source: Source, file: StaticString, line: UInt)
         -> (_ cellFactory: @escaping (UICollectionView, Int, Sequence.Element) -> UICollectionViewCell)
         -> Disposable where Source.Element == Sequence {
         return { cellFactory in
             let dataSource = RxCollectionViewReactiveArrayDataSourceSequenceWrapper<Sequence>(cellFactory: cellFactory)
-            return self.items(dataSource: dataSource)(source)
+            return self.items(dataSource: dataSource)(source, file, line)
         }
         
     }
@@ -75,10 +75,10 @@ extension Reactive where Base: UICollectionView {
     */
     public func items<Sequence: Swift.Sequence, Cell: UICollectionViewCell, Source: ObservableType>
         (cellIdentifier: String, cellType: Cell.Type = Cell.self)
-        -> (_ source: Source)
+        -> (_ source: Source, _ file: StaticString, _ line: UInt)
         -> (_ configureCell: @escaping (Int, Sequence.Element, Cell) -> Void)
         -> Disposable where Source.Element == Sequence {
-        return { source in
+        return { source, file, line in
             return { configureCell in
                 let dataSource = RxCollectionViewReactiveArrayDataSourceSequenceWrapper<Sequence> { cv, i, item in
                     let indexPath = IndexPath(item: i, section: 0)
@@ -87,7 +87,7 @@ extension Reactive where Base: UICollectionView {
                     return cell
                 }
                     
-                return self.items(dataSource: dataSource)(source)
+                return self.items(dataSource: dataSource)(source, file, line)
             }
         }
     }
@@ -136,10 +136,10 @@ extension Reactive where Base: UICollectionView {
             DataSource: RxCollectionViewDataSourceType & UICollectionViewDataSource,
             Source: ObservableType>
         (dataSource: DataSource)
-        -> (_ source: Source)
+        -> (_ source: Source, _ file: StaticString, _ line: UInt)
         -> Disposable where DataSource.Element == Source.Element
           {
-        return { source in
+        return { source, file, line in
             // This is called for sideeffects only, and to make sure delegate proxy is in place when
             // data source is being bound.
             // This is needed because theoretically the data source subscription itself might
@@ -148,7 +148,7 @@ extension Reactive where Base: UICollectionView {
             // Therefore it's better to set delegate proxy first, just to be sure.
             _ = self.delegate
             // Strong reference is needed because data source is in use until result subscription is disposed
-            return source.subscribeProxyDataSource(ofObject: self.base, dataSource: dataSource, retainDataSource: true) { [weak collectionView = self.base] (_: RxCollectionViewDataSourceProxy, event) -> Void in
+            return source.subscribeProxyDataSource(ofObject: self.base, dataSource: dataSource, retainDataSource: true, file: file, line: line) { [weak collectionView = self.base] (_: RxCollectionViewDataSourceProxy, event) -> Void in
                 guard let collectionView = collectionView else {
                     return
                 }

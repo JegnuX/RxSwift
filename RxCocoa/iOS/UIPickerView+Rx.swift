@@ -105,12 +105,12 @@
          */
         
         public func itemTitles<Sequence: Swift.Sequence, Source: ObservableType>
-            (_ source: Source)
+            (_ source: Source, file: StaticString = #file, line: UInt = #line)
             -> (_ titleForRow: @escaping (Int, Sequence.Element) -> String?)
             -> Disposable where Source.Element == Sequence {
                 return { titleForRow in
                     let adapter = RxStringPickerViewAdapter<Sequence>(titleForRow: titleForRow)
-                    return self.items(adapter: adapter)(source)
+                    return self.items(adapter: adapter)(source, file, line)
                 }
         }
         
@@ -138,12 +138,12 @@
          */
 
         public func itemAttributedTitles<Sequence: Swift.Sequence, Source: ObservableType>
-            (_ source: Source)
+        (_ source: Source, file: StaticString = #file, line: UInt = #line)
             -> (_ attributedTitleForRow: @escaping (Int, Sequence.Element) -> NSAttributedString?)
             -> Disposable where Source.Element == Sequence {
                 return { attributedTitleForRow in
                     let adapter = RxAttributedStringPickerViewAdapter<Sequence>(attributedTitleForRow: attributedTitleForRow)
-                    return self.items(adapter: adapter)(source)
+                    return self.items(adapter: adapter)(source, file, line)
                 }
         }
         
@@ -177,12 +177,12 @@
          */
 
         public func items<Sequence: Swift.Sequence, Source: ObservableType>
-            (_ source: Source)
+            (_ source: Source, file: StaticString, line: UInt)
             -> (_ viewForRow: @escaping (Int, Sequence.Element, UIView?) -> UIView)
             -> Disposable where Source.Element == Sequence {
                 return { viewForRow in
                     let adapter = RxPickerViewAdapter<Sequence>(viewForRow: viewForRow)
-                    return self.items(adapter: adapter)(source)
+                    return self.items(adapter: adapter)(source, file, line)
                 }
         }
         
@@ -197,13 +197,15 @@
          - parameter source: Observable sequence of items.
          - returns: Disposable object that can be used to unbind.
          */
-        public func items<Source: ObservableType,
-                          Adapter: RxPickerViewDataSourceType & UIPickerViewDataSource & UIPickerViewDelegate>(adapter: Adapter)
-            -> (_ source: Source)
+        public func items<
+            Source: ObservableType,
+            Adapter: RxPickerViewDataSourceType & UIPickerViewDataSource & UIPickerViewDelegate
+        >(adapter: Adapter)
+            -> (_ source: Source, _ file: StaticString, _ line: UInt)
             -> Disposable where Source.Element == Adapter.Element {
-                return { source in
+                return { source, file, line in
                     let delegateSubscription = self.setDelegate(adapter)
-                    let dataSourceSubscription = source.subscribeProxyDataSource(ofObject: self.base, dataSource: adapter, retainDataSource: true, binding: { [weak pickerView = self.base] (_: RxPickerViewDataSourceProxy, event) in
+                    let dataSourceSubscription = source.subscribeProxyDataSource(ofObject: self.base, dataSource: adapter, retainDataSource: true, file: file, line: line, binding: { [weak pickerView = self.base] (_: RxPickerViewDataSourceProxy, event) in
                         guard let pickerView = pickerView else { return }
                         adapter.pickerView(pickerView, observedEvent: event)
                     })
